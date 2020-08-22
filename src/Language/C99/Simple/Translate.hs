@@ -387,6 +387,7 @@ transstmt stmt = case stmt of
   Break                      -> C.StmtJump $ C.JumpBreak
   Label   name   s           -> labelstmt name s
   Return  e                  -> returnstmt e
+  Var     ty name init       -> compoundstmt [VarDecln Nothing ty name init] []
 
 exprstmt :: Expr -> C.Stmt
 exprstmt e = C.StmtExpr   $ C.ExprStmt (Just $ wrap $ transexpr e)
