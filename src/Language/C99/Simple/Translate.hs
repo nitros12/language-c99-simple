@@ -21,10 +21,10 @@ transtransunit (TransUnit declns fundefs) = fromList (declns' ++ fundefs') where
   fundefs' = map (C.ExtFun   . transfundef) fundefs
 
 transfundef :: FunDef -> C.FunDef
-transfundef (FunDef ty name params decln ss) =
+transfundef (FunDef ty name params bs) =
   C.FunDef dspecs declr Nothing body where
     dspecs   = getdeclnspecs Nothing ty
-    body     = compound decln ss
+    body     = compound bs
     declr    = execState (getdeclr ty) fundeclr
     fundeclr = C.Declr Nothing (fundirectdeclr name params)
 
@@ -387,40 +387,39 @@ transstmt stmt = case stmt of
   Break                      -> C.StmtJump $ C.JumpBreak
   Label   name   s           -> labelstmt name s
   Return  e                  -> returnstmt e
-  Var     ty name init       -> compoundstmt [VarDecln Nothing ty name init] []
 
 exprstmt :: Expr -> C.Stmt
 exprstmt e = C.StmtExpr   $ C.ExprStmt (Just $ wrap $ transexpr e)
 
-ifstmt :: Expr -> [Stmt] -> C.Stmt
-ifstmt cond ss = C.StmtSelect $ C.SelectIf cond' body where
+ifstmt :: Expr -> [BlockItem] -> C.Stmt
+ifstmt cond bs = C.StmtSelect $ C.SelectIf cond' body where
   cond' = wrap $ transexpr cond
-  body  = compoundstmt [] ss
+  body  = compoundstmt bs
 
-ifelsestmt :: Expr -> [Stmt] -> [Stmt] -> C.Stmt
-ifelsestmt cond ssthen sselse =
-  C.StmtSelect $ C.SelectIfElse cond' ssthen' sselse' where
+ifelsestmt :: Expr -> [BlockItem] -> [BlockItem] -> C.Stmt
+ifelsestmt cond bsthen bselse =
+  C.StmtSelect $ C.SelectIfElse cond' bsthen' bselse' where
     cond'  = wrap $ transexpr cond
-    ssthen' = compoundstmt [] ssthen
-    sselse' = compoundstmt [] sselse
+    bsthen' = compoundstmt bsthen
+    bselse' = compoundstmt bselse
 
 switchstmt :: Expr -> [Case] -> C.Stmt
 switchstmt cond cs = C.StmtSelect $ C.SelectSwitch cond' cs' where
   cond' = wrap $ transexpr cond
   cs'   = casestmt cs
 
-whilestmt :: Expr -> [Stmt] -> C.Stmt
-whilestmt cond ss = C.StmtIter $ C.IterWhile cond' ss' where
+whilestmt :: Expr -> [BlockItem] -> C.Stmt
+whilestmt cond bs = C.StmtIter $ C.IterWhile cond' bs' where
   cond' = wrap $ transexpr cond
-  ss'   = compoundstmt [] ss
+  bs'   = compoundstmt bs
 
-forstmt :: Maybe Expr -> Maybe Expr -> Maybe Expr -> [Stmt] -> C.Stmt
-forstmt start end step ss =
-  C.StmtIter $ C.IterForUpdate start' end' step' ss' where
+forstmt :: Maybe Expr -> Maybe Expr -> Maybe Expr -> [BlockItem] -> C.Stmt
+forstmt start end step bs =
+  C.StmtIter $ C.IterForUpdate start' end' step' bs' where
     start' = (wrap.transexpr) <$> start
     end'   = (wrap.transexpr) <$> end
     step'  = (wrap.transexpr) <$> step
-    ss'    = compoundstmt [] ss
+    bs'    = compoundstmt bs
 
 labelstmt :: String -> Stmt -> C.Stmt
 labelstmt name s = C.StmtLabeled $ C.LabeledIdent (ident name) (transstmt s)
@@ -435,14 +434,16 @@ casestmt cs =
       Case  e s -> C.LabeledCase (C.Const $ wrap $ transexpr e) (transstmt s)
       Default s -> C.LabeledDefault (transstmt s)
 
-compound :: [Decln] -> [Stmt] -> C.CompoundStmt
-compound ds ss = C.Compound (Just $ fromList items) where
-  items = ds' ++ ss'
-  ss' = map (C.BlockItemStmt . transstmt) ss
-  ds' = map (C.BlockItemDecln . transdecln) ds
+transblockitem :: BlockItem -> C.BlockItem
+transblockitem (Decln d) = C.BlockItemDecln . transdecln $ d
+transblockitem (Stmt d) = C.BlockItemStmt . transstmt $ d
 
-compoundstmt :: [Decln] -> [Stmt] -> C.Stmt
-compoundstmt ds ss = C.StmtCompound $ compound ds ss
+compound :: [BlockItem] -> C.CompoundStmt
+compound bs = C.Compound (Just $ fromList items) where
+  items = map transblockitem bs
+
+compoundstmt :: [BlockItem] -> C.Stmt
+compoundstmt bs = C.StmtCompound $ compound bs
 
 fundirectdeclr :: Ident -> [Param] -> C.DirectDeclr
 fundirectdeclr name params = C.DirectDeclrFun1 namedeclr params' where

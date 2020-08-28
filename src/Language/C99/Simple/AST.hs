@@ -15,10 +15,14 @@ import Data.List.NonEmpty (NonEmpty)
 
 type Ident    = String
 
+data BlockItem = Decln Decln
+               | Stmt Stmt
+  deriving ( Show, Eq )
+
 data TransUnit = TransUnit [Decln] [FunDef]
   deriving ( Show, Eq )
 
-data FunDef = FunDef Type Ident [Param] [Decln] [Stmt]
+data FunDef = FunDef Type Ident [Param] [BlockItem]
   deriving ( Show, Eq )
 
 data Param = Param Type Ident
@@ -186,15 +190,15 @@ data Case = Case    Expr Stmt
   deriving ( Show, Eq )
 
 data Stmt = Expr     Expr
-          | If       Expr [Stmt]
-          | IfElse   Expr [Stmt] [Stmt]
+          | If       Expr [BlockItem]
+          | IfElse   Expr [BlockItem] [BlockItem]
           | Switch   Expr [Case]
-          | While    Expr [Stmt]
-          | For      Expr Expr Expr [Stmt]
-          | ForInf   [Stmt]
+          | While    Expr [BlockItem]
+          | For      Expr Expr Expr [BlockItem]
+          | ForInf   [BlockItem]
           | Continue
           | Break
           | Label    String Stmt
+          | Block [BlockItem]
           | Return   (Maybe Expr)
-          | Var      Type Ident (Maybe Init)
   deriving ( Show, Eq )
