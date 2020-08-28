@@ -196,5 +196,4 @@ data Stmt = Expr     Expr
           | Break
           | Label    String Stmt
           | Return   (Maybe Expr)
-          | Var      Type Ident (Maybe Init)
   deriving ( Show, Eq )
