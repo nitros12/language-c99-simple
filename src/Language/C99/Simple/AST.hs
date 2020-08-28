@@ -16,20 +16,25 @@ import Data.List.NonEmpty (NonEmpty)
 type Ident    = String
 
 data TransUnit = TransUnit [Decln] [FunDef]
+  deriving ( Show, Eq )
 
 data FunDef = FunDef Type Ident [Param] [Decln] [Stmt]
+  deriving ( Show, Eq )
 
 data Param = Param Type Ident
+  deriving ( Show, Eq )
 
 data Decln = VarDecln (Maybe StorageSpec) Type Ident (Maybe Init)
            | FunDecln (Maybe StorageSpec) Type Ident [Param]
            | TypeDecln Type
+  deriving ( Show, Eq )
 
 data StorageSpec = Typedef
                  | Extern
                  | Static
                  | Auto
                  | Register
+  deriving ( Show, Eq )
 
 data Type = Type     Type
           | TypeSpec TypeSpec
@@ -39,6 +44,7 @@ data Type = Type     Type
           | Const    Type
           | Restrict Type
           | Volatile Type
+  deriving ( Show, Eq )
 
 data TypeSpec = Void
               | Char
@@ -93,13 +99,17 @@ data TypeSpec = Void
 
               | Enum      Ident
               | EnumDecln (Maybe Ident) (NonEmpty Ident)
+  deriving ( Show, Eq )
 
 data FieldDecln = FieldDecln Type Ident
+  deriving ( Show, Eq )
 
 data Init = InitExpr  Expr
           | InitMultiple (NonEmpty InitItem)
+  deriving ( Show, Eq )
 
 data InitItem = InitItem (Maybe Ident) Init
+  deriving ( Show, Eq )
 
 data Expr = Ident     Ident
           | LitBool   Bool
@@ -123,6 +133,7 @@ data Expr = Ident     Ident
           | Cond Expr Expr Expr
 
           | AssignOp AssignOp Expr Expr
+  deriving ( Show, Eq )
 
 data UnaryOp = Inc
              | Dec
@@ -132,6 +143,7 @@ data UnaryOp = Inc
              | Min
              | BoolNot
              | Not
+  deriving ( Show, Eq )
 
 data BinaryOp = Mult
               | Div
@@ -151,6 +163,7 @@ data BinaryOp = Mult
               | Or
               | LAnd
               | LOr
+  deriving ( Show, Eq )
 
 data AssignOp = Assign
               | AssignMult
@@ -163,11 +176,14 @@ data AssignOp = Assign
               | AssignAnd
               | AssignXOr
               | AssignOr
+  deriving ( Show, Eq )
 
 data TypeName = TypeName Type
+  deriving ( Show, Eq )
 
 data Case = Case    Expr Stmt
           | Default      Stmt
+  deriving ( Show, Eq )
 
 data Stmt = Expr     Expr
           | If       Expr [Stmt]
@@ -181,3 +197,4 @@ data Stmt = Expr     Expr
           | Label    String Stmt
           | Return   (Maybe Expr)
           | Var      Type Ident (Maybe Init)
+  deriving ( Show, Eq )
