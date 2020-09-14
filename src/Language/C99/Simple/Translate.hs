@@ -386,6 +386,7 @@ transstmt stmt = case stmt of
   Continue                   -> C.StmtJump $ C.JumpContinue
   Break                      -> C.StmtJump $ C.JumpBreak
   Label   name   s           -> labelstmt name s
+  Block   blks               -> compoundstmt blks
   Return  e                  -> returnstmt e
 
 exprstmt :: Expr -> C.Stmt
