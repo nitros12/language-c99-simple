@@ -21,39 +21,39 @@ transtransunit (TransUnit declns fundefs) = fromList (declns' ++ fundefs') where
   fundefs' = map (C.ExtFun   . transfundef) fundefs
 
 transfundef :: FunDef -> C.FunDef
-transfundef (FunDef ty name params bs) =
+transfundef (FunDef attrs ty name params bs) =
   C.FunDef dspecs declr Nothing body where
-    dspecs   = getdeclnspecs Nothing ty
+    dspecs   = getdeclnspecs attrs Nothing ty
     body     = compound bs
     declr    = execState (getdeclr ty) fundeclr
     fundeclr = C.Declr Nothing (fundirectdeclr name params)
 
 transdecln :: Decln -> C.Decln
 transdecln decln = case decln of
-  FunDecln storespec ty name params -> C.Decln dspecs dlist where
-    dspecs     = getdeclnspecs storespec ty
+  FunDecln attrs storespec ty name params -> C.Decln dspecs dlist where
+    dspecs     = getdeclnspecs attrs storespec ty
     dlist      = Just $ C.InitDeclrBase $ C.InitDeclr declr
     declr      = execState (getdeclr ty) fundeclr
     fundeclr   = C.Declr Nothing (fundirectdeclr name params)
 
-  VarDecln storespec ty name init -> C.Decln dspecs dlist where
-    dspecs = getdeclnspecs storespec ty
+  VarDecln attrs storespec ty name init -> C.Decln dspecs dlist where
+    dspecs = getdeclnspecs attrs storespec ty
     dlist  = Just $ case init of
       Nothing  -> C.InitDeclrBase $ C.InitDeclr      declr
       Just val -> C.InitDeclrBase $ C.InitDeclrInitr declr (transinit val)
     declr  = execState (getdeclr ty) (identdeclr name)
 
   TypeDecln ty -> C.Decln dspecs Nothing where
-    dspecs = getdeclnspecs Nothing ty
+    dspecs = getdeclnspecs Nothing Nothing ty
 
 transparamdecln :: Param -> C.ParamDecln
 transparamdecln (Param ty name) = C.ParamDecln dspecs declr where
-  dspecs = getdeclnspecs Nothing ty
+  dspecs = getdeclnspecs Nothing Nothing ty
   declr  = execState (getdeclr ty) (identdeclr name)
 
 transparam :: Param -> C.Decln
 transparam (Param ty name) = C.Decln dspecs dlist where
-  dspecs = getdeclnspecs Nothing ty
+  dspecs = getdeclnspecs Nothing Nothing ty
   dlist  = Just $ C.InitDeclrBase $ C.InitDeclr declr
   declr  = execState (getdeclr ty) (identdeclr name)
 
@@ -86,9 +86,13 @@ getdeclr ty = case ty of
   Volatile ty' -> getdeclr ty'
 
 
-getdeclnspecs :: Maybe StorageSpec -> Type -> C.DeclnSpecs
-getdeclnspecs storespec ty = dspecs where
-  dspecs = case storespec of
+getdeclnspecs :: Maybe Attributes -> Maybe StorageSpec -> Type -> C.DeclnSpecs
+getdeclnspecs attrs storespec ty = dspecs where
+  dspecs = case attrs of
+    Nothing -> dspecs'
+    Just attrs' -> C.DeclnSpecsAttr attrs' (Just dspecs')
+
+  dspecs' = case storespec of
     Nothing   -> tyspec
     Just spec -> C.DeclnSpecsStorage (transstorespec spec) (Just tyspec)
 
@@ -101,7 +105,7 @@ getdeclnspecs storespec ty = dspecs where
     Restrict ty'   -> C.DeclnSpecsQual C.QRestrict (Just $ rec ty')
     Volatile ty'   -> C.DeclnSpecsQual C.QVolatile (Just $ rec ty')
 
-  rec = getdeclnspecs Nothing
+  rec = getdeclnspecs Nothing Nothing
 
 transstorespec :: StorageSpec -> C.StorageClassSpec
 transstorespec spec = case spec of

@@ -22,14 +22,16 @@ data BlockItem = Decln Decln
 data TransUnit = TransUnit [Decln] [FunDef]
   deriving ( Show, Eq )
 
-data FunDef = FunDef Type Ident [Param] [BlockItem]
+data FunDef = FunDef (Maybe Attributes) Type Ident [Param] [BlockItem]
   deriving ( Show, Eq )
 
 data Param = Param Type Ident
   deriving ( Show, Eq )
 
-data Decln = VarDecln (Maybe StorageSpec) Type Ident (Maybe Init)
-           | FunDecln (Maybe StorageSpec) Type Ident [Param]
+type Attributes = String
+
+data Decln = VarDecln (Maybe Attributes) (Maybe StorageSpec) Type Ident (Maybe Init)
+           | FunDecln (Maybe Attributes) (Maybe StorageSpec) Type Ident [Param]
            | TypeDecln Type
   deriving ( Show, Eq )
 
