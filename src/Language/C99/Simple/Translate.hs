@@ -183,14 +183,19 @@ transfielddecln (FieldDecln ty name) = C.StructDecln quals declrlist where
   declr = execState (getdeclr ty) (identdeclr name)
   quals = getspecquals ty
 
-transvariantdeclns :: NonEmpty Ident -> C.EnumrList
+transvariantdeclns :: NonEmpty VariantDecln  -> C.EnumrList
 transvariantdeclns (decln NE.:| []) = C.EnumrBase (transvariantdecln decln)
 transvariantdeclns (decln NE.:| (d : ds)) = C.EnumrCons
   (transvariantdeclns (d NE.:| ds))
   (transvariantdecln decln)
 
-transvariantdecln :: Ident -> C.Enumr
-transvariantdecln name = C.Enumr (C.Enum (ident name))
+transvariantdecln :: VariantDecln -> C.Enumr
+transvariantdecln (VariantDecln name Nothing) = C.Enumr (C.Enum (ident name))
+transvariantdecln (VariantDecln name (Just init)) =
+  C.EnumrInit
+    (C.Enum (ident name))
+    ( C.Const . wrap . transexpr $ LitInt init
+    )
 
 getspecquals :: Type -> C.SpecQualList
 getspecquals ty = case ty of

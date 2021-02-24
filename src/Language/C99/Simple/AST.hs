@@ -104,10 +104,13 @@ data TypeSpec = Void
               | UnionDecln (Maybe Ident) (NonEmpty FieldDecln)
 
               | Enum      Ident
-              | EnumDecln (Maybe Ident) (NonEmpty Ident)
+              | EnumDecln (Maybe Ident) (NonEmpty VariantDecln)
   deriving ( Show, Eq )
 
 data FieldDecln = FieldDecln Type Ident
+  deriving ( Show, Eq )
+
+data VariantDecln = VariantDecln Ident (Maybe Integer)
   deriving ( Show, Eq )
 
 data Init = InitExpr  Expr
